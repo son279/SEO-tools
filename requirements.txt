@@ -5,3 +5,7 @@ google-auth
 google-auth-oauthlib
 google-analytics-data
 mcp[cli]<2
+# backlink pipeline
+aiohttp
+networkx
+tldextract

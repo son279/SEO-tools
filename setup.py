@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="seo-crawler-suite",
     version="1.0.0",
-    description="SEO crawler and competitor keyword-gap engine with an MCP server and CLI.",
+    description="SEO crawler, keyword-gap and Common Crawl backlink tools with an MCP server and CLI.",
     py_modules=["cli", "seo_crawler", "seo_mcp_server", "lan_http"],
     packages=find_packages(),
     install_requires=[
@@ -12,6 +12,7 @@ setup(
     ],
     extras_require={
         "mcp": ["mcp[cli]<2"],
+        "backlinks": ["aiohttp", "networkx", "tldextract"],
     },
     entry_points={
         "console_scripts": [

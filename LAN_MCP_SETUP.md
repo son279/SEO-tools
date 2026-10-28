@@ -1,44 +1,44 @@
-# Sharing the SEO MCP servers on the office network (LAN)
+# Sharing the SEO Tools MCP server on the office network (LAN)
 
-One PC (the **host**) runs both servers; teammates' Claude Desktop / Claude Code connect to it.
+One machine (the **host**) runs the server, and teammates' Claude Desktop or Claude Code connects to it. A single server exposes both the crawler tools and the backlink tools.
 
-| Server | Folder | LAN URL |
-|---|---|---|
-| seo-crawler | `SEO System` | `http://<HOST-IP>:8765/mcp` |
-| backlink-graph | `PythonProject5` | `http://<HOST-IP>:8766/mcp` |
+| Server | URL |
+|---|---|
+| `seo-tools` (crawler + backlinks) | `http://<HOST-IP>:8765/mcp` |
 
-Running either server with no arguments still uses stdio, so the host's existing Claude Desktop config keeps working.
+Running `seo_mcp_server.py` with no arguments still uses stdio, so a local Claude Desktop config keeps working.
 
-## Host PC (one time)
+## Windows host (one time)
 
 1. Make sure Windows marks the office network as **Private** (Settings > Network > Properties).
-2. Open **PowerShell as Administrator** in the `SEO System` folder and run:
-   `powershell -ExecutionPolicy Bypass -File setup_lan_host.ps1`
-   This creates a shared token (`%USERPROFILE%\.seo_mcp_token`), opens ports 8765/8766 to the local subnet only,
-   registers both servers to start at boot, and disables sleep on AC power. It prints the IP, URLs and token.
+2. Open **PowerShell as Administrator** in the project folder and run:
+   ```
+   powershell -ExecutionPolicy Bypass -File setup_lan_host.ps1 -BacklinkDataDir D:\path\to\backlink_data
+   ```
+   Leave out `-BacklinkDataDir` to use `<project>\backlink_data`. The script:
+   - creates a shared token (`%USERPROFILE%\.seo_mcp_token`)
+   - sets `BACKLINK_DATA_DIR` machine-wide
+   - opens port 8765 to the local subnet only
+   - registers the server to start at boot
+   - disables sleep on AC power
+   - removes the older two-server tasks if they exist
+
+   It prints the IP, URL and token.
 3. In your router, give the host a **DHCP reservation** so its IP never changes.
-4. Start now: `schtasks /Run /TN "SEO MCP crawler"` and `schtasks /Run /TN "SEO MCP backlink"`
-   (or just double-click the two `start_*_mcp_lan.bat` files to run them in a window).
+4. Start now: `schtasks /Run /TN "SEO MCP tools"`, or double-click `start_seo_mcp_lan.bat` to run it in a window.
 
-Before teammates can query backlinks, run the `build_index` tool once on the host (it creates `backlink_index/query.sqlite3`).
+Before anyone can run backlink queries, run the pipeline stages and `build_index` once on the host. In Claude, call `backlink_pipeline_status` and it suggests the next step.
 
-## Teammate PCs
+## Teammate machines
 
-Requires Node.js (for `npx`). Edit Claude Desktop's config
-(Settings > Developer > Edit Config, i.e. `%APPDATA%\Claude\claude_desktop_config.json`), replace `HOST-IP` and `TOKEN`, then restart Claude:
+These need Node.js (for `npx`). Edit Claude Desktop's config (Settings > Developer > Edit Config), replace `HOST-IP` and `TOKEN`, then restart Claude:
 
 ```json
 {
   "mcpServers": {
-    "seo-crawler": {
+    "seo-tools": {
       "command": "npx",
       "args": ["-y", "mcp-remote", "http://HOST-IP:8765/mcp", "--allow-http",
-               "--header", "Authorization:${AUTH_HEADER}"],
-      "env": { "AUTH_HEADER": "Bearer TOKEN" }
-    },
-    "backlink-graph": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "http://HOST-IP:8766/mcp", "--allow-http",
                "--header", "Authorization:${AUTH_HEADER}"],
       "env": { "AUTH_HEADER": "Bearer TOKEN" }
     }
@@ -49,33 +49,27 @@ Requires Node.js (for `npx`). Edit Claude Desktop's config
 Claude Code:
 
 ```
-claude mcp add --transport http seo-crawler    http://HOST-IP:8765/mcp --header "Authorization: Bearer TOKEN"
-claude mcp add --transport http backlink-graph http://HOST-IP:8766/mcp --header "Authorization: Bearer TOKEN"
+claude mcp add --transport http seo-tools http://HOST-IP:8765/mcp --header "Authorization: Bearer TOKEN"
 ```
 
 ## Quick check
 
-From a teammate PC (should print 401 without the token, i.e. the server is reachable):
-`curl -s -o NUL -w "%{http_code}" -X POST http://HOST-IP:8765/mcp`
+From a teammate machine, this should print `401` without the token, which means the server is reachable:
+`curl -s -o NUL -w "%{http_code}" -X POST http://HOST-IP:8765/mcp` (on macOS/Linux use `-o /dev/null`).
 
 ## Notes
 
-- `run_seo_crawl` output folders and backlink `start_stage` jobs run **on the host**. Relative `output_dir` values land in the host's `SEO System` folder.
-- Backlink jobs are tracked in memory: restarting the backlink server forgets job ids (the stage process keeps running; its log is in `mcp_server/job_logs`).
-- Traffic is plain HTTP inside the LAN. Don't port-forward these ports to the internet; use a tunnel with proper auth if you later need outside access.
-- Rotate the token by deleting `%USERPROFILE%\.seo_mcp_token`, re-running the setup script, and restarting both tasks.
+- Crawls (`run_seo_crawl`) and backlink jobs (`start_stage`) run **on the host**. Relative `output_dir` values land in the host's project folder, and backlink files land in `BACKLINK_DATA_DIR`.
+- Backlink jobs are tracked in memory, so restarting the server forgets job ids. A stage that's already running keeps going, and its log stays in `<BACKLINK_DATA_DIR>/job_logs/`.
+- Traffic is plain HTTP inside the LAN. Don't port-forward 8765 to the internet; use a VPN (e.g. Tailscale) or a tunnel with proper auth for outside access.
+- To rotate the token, delete `%USERPROFILE%\.seo_mcp_token`, re-run the setup script, and restart the task.
 
 ## Hosting on a Mac instead
 
-The Python code is cross-platform; the Mac uses `setup_mac_host.sh` + `start_*_mcp_lan.sh` instead of the `.ps1`/`.bat` files.
+See [MAC_PIPELINE_SETUP.md](MAC_PIPELINE_SETUP.md). In short:
 
-1. On the PC run `powershell -ExecutionPolicy Bypass -File package_for_mac.ps1` -> `Desktop\seo-mcp-mac.zip`.
-   Copy it to the Mac and unpack with `ditto -x -k ~/Downloads/seo-mcp-mac.zip ~/` (gives `~/seo-mcp/`).
-   The 36 GB pipeline inputs stay on the PC; pipeline stages (`start_stage`) won't run on the Mac without them.
-2. Install Python 3.10+ from python.org, then run /Applications/Python 3.x/Install Certificates.command.
-3. Terminal: `cd ~/seo-mcp/"SEO System" && bash setup_mac_host.sh` (enter your Mac password when asked).
-4. Check: `curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8765/mcp` -> 401. Same for 8766.
-5. No fixed IP needed: teammates can use `http://<LocalHostName>.local:8765/mcp` (name shown in System Settings > General > Sharing). Check from their PC with `ping <name>.local`. Laptops: keep plugged in; a closed lid sleeps unless an external display is attached.
+1. Copy the project to `~/seo-mcp/SEO System`, outside Downloads, Documents and Desktop. From a Windows PC, `package_for_mac.ps1` builds `Desktop\seo-mcp-mac.zip`; add `-IncludeBacklink` to include the backlink query data.
+2. Install Python 3.10+, then run `bash setup_mac_host.sh` (or `BACKLINK_DATA_DIR=/path bash setup_mac_host.sh`).
+3. Check: `curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8765/mcp` should print 401.
 
-Logs: `~/Library/Logs/seo-mcp/`. Restart a service: `sudo launchctl kickstart -k system/com.bigriver.seo-mcp.crawler`
-(or `...backlink`). Remove: `sudo launchctl bootout system /Library/LaunchDaemons/com.bigriver.seo-mcp.crawler.plist`.
+Logs: `~/Library/Logs/seo-mcp/seo-tools.log`. Restart: `sudo launchctl kickstart -k system/com.seotools.mcp`.

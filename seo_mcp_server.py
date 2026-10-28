@@ -1,4 +1,4 @@
-"""Local MCP server exposing the SEO crawler pipeline to Claude Desktop.
+"""SEO Tools MCP server: on-page crawler + Common Crawl backlink analysis.
 
 Run manually to sanity-check:
     .venv\\Scripts\\python.exe seo_mcp_server.py
@@ -15,6 +15,16 @@ Tools exposed:
     - get_ai_audit_packet   Read the compact text packet built for LLM audits.
     - list_crawl_outputs    List files/sizes currently in an output dir.
     - get_crawl_status      Poll a background crawl (state, exit code, log).
+
+Backlink tools (backlinks/tools.py, data in BACKLINK_DATA_DIR):
+    - backlink_pipeline_status, get/set_backlink_clients
+    - start_stage, build_visual_graph, run_backlink_gap_scan,
+      job_status, list_backlink_jobs, cancel_job
+    - build_index, get_backlink_counts, list_backlinks, backlink_gap,
+      get_common_crawl_host_rank, top_common_crawl_hosts,
+      get_followup_summary, get_visual_graph
+    - list_backlink_reports, read_backlink_report
+    - prompts: pipeline_order, backlink_audit, full_seo_and_backlink_audit
 """
 from __future__ import annotations
 
@@ -33,11 +43,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 PYTHON_EXE = Path(sys.executable)
 
 mcp = FastMCP(
-    "seo-crawler",
+    "seo-tools",
     instructions=(
-        "Crawl a primary website and optional competitors, then inspect the "
-        "generated SEO, Markdown, and keyword-gap reports. Run the crawl "
-        "before requesting its reports."
+        "On-page: crawl a primary website and optional competitors with "
+        "run_seo_crawl, then inspect the generated SEO, Markdown and keyword-gap "
+        "reports (run the crawl before requesting its reports). "
+        "Off-page: backlink analysis on the Common Crawl host graph; call "
+        "backlink_pipeline_status first to see which data and stages are ready."
     ),
 )
 
@@ -333,6 +345,13 @@ def list_crawl_outputs(output_dir: str = "seo_output") -> dict[str, Any]:
                 "bytes": p.stat().st_size,
             })
     return {"output_dir": str(resolved_output), "files": files}
+
+
+# Backlink tools (pipeline stages, queries, reports, prompts).
+sys.path.insert(0, str(PROJECT_ROOT))
+from backlinks.tools import register as _register_backlink_tools  # noqa: E402
+
+_register_backlink_tools(mcp)
 
 
 def main() -> None:

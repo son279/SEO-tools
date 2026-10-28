@@ -68,3 +68,14 @@ token.pickle
 *_keyword_opportunities.csv
 vsg-*.txt
 clients.txt
+
+# Backlink data (Common Crawl downloads + generated index; tens of GB)
+backlink_data/
+host_vertices/
+host_edges_only/
+backlink_index/
+job_logs/
+cc-main-*
+*.sqlite3
+*.gexf
+*.graphml
