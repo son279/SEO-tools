@@ -1,0 +1,146 @@
+{
+  "primary_top_keywords": [
+    ["managed", 42],
+    ["it", 38],
+    ["support", 31],
+    ["security", 29],
+    ["consulting", 22],
+    ["network", 18],
+    ["monitoring", 14],
+    ["endpoint", 12],
+    ["backup", 11],
+    ["cloud", 10]
+  ],
+
+  "competitor_top_keywords": [
+    ["managed", 55],
+    ["it", 53],
+    ["services", 47],
+    ["security", 45],
+    ["consulting", 40],
+    ["camera", 33],
+    ["low", 31],
+    ["voltage", 30],
+    ["surveillance", 28],
+    ["installation", 26],
+    ["network", 25],
+    ["monitoring", 22],
+    ["response", 20],
+    ["compliance", 19]
+  ],
+
+  "missing_keywords": {
+    "camera": 33,
+    "low": 31,
+    "voltage": 30,
+    "surveillance": 28,
+    "installation": 26,
+    "response": 20,
+    "compliance": 19
+  },
+
+  "strengthen_keywords": {
+    "security": 45,
+    "consulting": 40,
+    "network": 25,
+    "monitoring": 22
+  },
+
+  "semantic_clusters": {
+    "managed_it": [
+      "managed",
+      "it",
+      "support",
+      "services",
+      "monitoring",
+      "response"
+    ],
+    "security_operations": [
+      "security",
+      "endpoint",
+      "monitoring",
+      "compliance",
+      "response"
+    ],
+    "low_voltage": [
+      "camera",
+      "low",
+      "voltage",
+      "surveillance",
+      "installation"
+    ],
+    "business_continuity": [
+      "backup",
+      "cloud",
+      "network",
+      "monitoring"
+    ]
+  },
+
+  "page_scores": {
+    "https://primarysite.com/services/managed-it": {
+      "word_count": 1240,
+      "heading_count": 12,
+      "keyword_frequency": {
+        "managed it": 14,
+        "security": 4,
+        "consulting": 2,
+        "low voltage": 0
+      }
+    },
+    "https://primarysite.com/services/security": {
+      "word_count": 980,
+      "heading_count": 9,
+      "keyword_frequency": {
+        "managed it": 3,
+        "security": 12,
+        "consulting": 1,
+        "low voltage": 0
+      }
+    }
+  },
+
+  "chunk_scores": {
+    "https://primarysite.com/services/managed-it": [
+      {
+        "chunk": 1,
+        "word_count": 410,
+        "heading_count": 4,
+        "keyword_frequency": {
+          "managed it": 6,
+          "security": 1,
+          "consulting": 0,
+          "low voltage": 0
+        }
+      },
+      {
+        "chunk": 2,
+        "word_count": 390,
+        "heading_count": 3,
+        "keyword_frequency": {
+          "managed it": 5,
+          "security": 2,
+          "consulting": 1,
+          "low voltage": 0
+        }
+      }
+    ]
+  },
+
+  "target_keywords": [
+    "managed it",
+    "security",
+    "consulting",
+    "low voltage"
+  ],
+
+  "meta": {
+    "primary_sitemap": "https://primarysite.com/sitemap.xml",
+    "competitors": [
+      "https://competitor1.com/sitemap.xml",
+      "https://competitor2.com/sitemap.xml"
+    ],
+    "generated_at": "2026-09-11T12:44:00-05:00",
+    "location": "Germantown, TN"
+  }
+}
